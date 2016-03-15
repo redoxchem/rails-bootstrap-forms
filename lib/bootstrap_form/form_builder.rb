@@ -189,7 +189,7 @@ module BootstrapForm
       options[:class] << " #{error_class}" if has_error?(name)
       options[:class] << " #{feedback_class}" if options[:icon]
 
-      content_tag(:div, options.except(:id, :label, :help, :icon, :label_col, :control_col, :layout)) do
+      content_tag(:div, options.except(:id, :label, :help, :icon, :label_col, :control_col, :layout, :control_first)) do
         label = generate_label(options[:id], name, options[:label], options[:label_col], options[:layout]) if options[:label]
         control = capture(&block).to_s
         control.concat(generate_help(name, options[:help]).to_s)
@@ -203,8 +203,11 @@ module BootstrapForm
           end
           control = content_tag(:div, control, class: control_class)
         end
-
-        concat(label).concat(control)
+        if options[:control_first]
+          concat(control).concat(label)
+        else
+          concat(label).concat(control)
+        end
       end
     end
 
@@ -276,7 +279,7 @@ module BootstrapForm
 
       target = (obj.class == Class) ? obj : obj.class
 
-      target_validators = if target.respond_to? :validators_on 
+      target_validators = if target.respond_to? :validators_on
                             target.validators_on(attribute).map(&:class)
                           else
                             []
@@ -311,6 +314,8 @@ module BootstrapForm
       label_col = options.delete(:label_col)
       control_col = options.delete(:control_col)
       layout = get_group_layout(options.delete(:layout))
+      control_first = options.delete(:control_first) || false
+
       form_group_options = {
         id: options[:id],
         help: help,
@@ -318,7 +323,8 @@ module BootstrapForm
         label_col: label_col,
         control_col: control_col,
         layout: layout,
-        class: wrapper_class
+        class: wrapper_class,
+        control_first: control_first
       }
 
       if wrapper_options.is_a?(Hash)
